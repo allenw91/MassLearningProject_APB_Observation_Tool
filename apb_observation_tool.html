@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APB Observation Tool | Mass Learning Project &amp; one8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F4F6F9;
+            color: #1E293B;
+        }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 280px;
+            max-width: 90vw;
+            background-color: #0F2B4C;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px 20px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 28px;
+            transform: translateX(-50%);
+            font-size: 0.875rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px -5px rgba(15, 43, 76, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        #toast.toast-error {
+            background-color: #B91C1C;
+        }
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.3s ease-out, fadeout 0.4s ease-in 2.6s forwards;
+        }
+        @keyframes fadein {
+            from { bottom: 8px; opacity: 0; }
+            to { bottom: 28px; opacity: 1; }
+        }
+        @keyframes fadeout {
+            from { bottom: 28px; opacity: 1; }
+            to { bottom: 8px; opacity: 0; }
+        }
+
+        /* Custom Chevron Tab Accents */
+        .phase-tab {
+            transition: all 0.2s ease;
+        }
+        .phase-tab.active-activities {
+            background-color: #ECECEC;
+            border-color: #64748B;
+            color: #0F2B4C;
+            box-shadow: 0 2px 6px rgba(15, 43, 76, 0.08);
+        }
+        .phase-tab.active-projects {
+            background-color: #BCE3F5;
+            border-color: #0284C7;
+            color: #0F2B4C;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.14);
+        }
+        .phase-tab.active-problems {
+            background-color: #C3F2A6;
+            border-color: #16A34A;
+            color: #0F2B4C;
+            box-shadow: 0 2px 6px rgba(22, 163, 74, 0.14);
+        }
+
+        /* Status Select Dynamic Styling */
+        .status-select {
+            transition: border-color 0.15s ease, background-color 0.15s ease;
+        }
+        .status-observed {
+            background-color: #ECFDF5;
+            border-color: #10B981;
+            color: #065F46;
+            font-weight: 600;
+        }
+        .status-emerging {
+            background-color: #FFFBEB;
+            border-color: #F59E0B;
+            color: #92400E;
+            font-weight: 600;
+        }
+        .status-not-observed {
+            background-color: #FEF2F2;
+            border-color: #EF4444;
+            color: #991B1B;
+            font-weight: 600;
+        }
+        .status-na {
+            background-color: #F1F5F9;
+            border-color: #94A3B8;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        /* Print View Rules */
+        #print-view {
+            display: none;
+        }
+        @media print {
+            body {
+                background-color: #FFFFFF !important;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            #print-view {
+                display: block !important;
+                width: 100%;
+                padding: 12px;
+                color: #111827;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                font-size: 10pt;
+            }
+            th, td {
+                border: 1px solid #CBD5E1;
+                padding: 7px 9px;
+                text-align: left;
+                vertical-align: top;
+            }
+            th {
+                background-color: #0F2B4C !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .print-banner {
+                background-color: #0F2B4C !important;
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Branded Header (Mass Learning Project | one8) -->
+    <header style="background-color: #0F2B4C;" class="text-white py-5 shadow-md no-print border-b-4 border-[#BCE3F5]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <!-- Left Logo & Title Block -->
+            <div class="flex items-start sm:items-center gap-4">
+                <!-- Mass Learning Project | one8 SVG Brand Lockup -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <div class="bg-white text-[#0F2B4C] px-2 py-1.5 rounded font-extrabold text-[10px] leading-tight tracking-tight uppercase shadow-sm select-none">
+                        <div>MASS</div>
+                        <div>LEARNING</div>
+                        <div>PROJECT</div>
+                    </div>
+                    <div class="h-9 w-px bg-white/30"></div>
+                    <div class="text-white tracking-tight select-none leading-none">
+                        <span class="text-xl font-light">one</span><span class="text-2xl font-bold">8</span>
+                    </div>
+                </div>
+
+                <div class="hidden sm:block h-10 w-px bg-white/20 mx-1"></div>
+
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">APB Observation Tool</h1>
+                    <p class="text-xs sm:text-sm text-sky-100 mt-0.5 font-medium">
+                        PLTW Classrooms look and feel different depending on which part of the APB they are on
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Action Controls -->
+            <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-start lg:justify-end">
+                <button type="button" onclick="resetForm()" class="bg-rose-700 hover:bg-rose-800 text-white px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shadow-sm border border-rose-600 cursor-pointer">
+                    Reset
+                </button>
+                <button type="button" onclick="copyToClipboard()" class="bg-white hover:bg-slate-100 text-[#0F2B4C] px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shadow-sm cursor-pointer">
+                    Copy Data
+                </button>
+                <button type="button" onclick="exportCSV()" class="bg-white hover:bg-slate-100 text-[#0F2B4C] px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition shadow-sm cursor-pointer">
+                    Export CSV
+                </button>
+                <button type="button" onclick="printPDF()" class="bg-[#BCE3F5] hover:bg-sky-200 text-[#0F2B4C] px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition shadow-sm cursor-pointer">
+                    Print / PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Interactive Workspace -->
+    <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 no-print">
+
+        <!-- Classroom & Observer Metadata Card -->
+        <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-[#0F2B4C]">Classroom Walkthrough Details</h2>
+                <span class="text-xs text-slate-500"><span class="text-rose-600 font-bold">*</span> Required before exporting or printing</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Evaluator Name -->
+                <div>
+                    <label for="evaluator-input" class="block text-xs font-bold text-slate-700 mb-1.5">
+                        Evaluator Name <span class="text-rose-600">*</span>
+                    </label>
+                    <input type="text" id="evaluator-input" placeholder="Enter evaluator name..." class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0F2B4C] focus:border-[#0F2B4C]">
+                </div>
+
+                <!-- Teacher Observed -->
+                <div>
+                    <label for="teacher-input" class="block text-xs font-bold text-slate-700 mb-1.5">
+                        Teacher Observed <span class="text-rose-600">*</span>
+                    </label>
+                    <input type="text" id="teacher-input" placeholder="Enter teacher name..." class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0F2B4C] focus:border-[#0F2B4C]">
+                </div>
+
+                <!-- Observation Date -->
+                <div>
+                    <label for="date-input" class="block text-xs font-bold text-slate-700 mb-1.5">
+                        Observation Date
+                    </label>
+                    <input type="date" id="date-input" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0F2B4C] focus:border-[#0F2B4C]">
+                </div>
+
+                <!-- Grade Level -->
+                <div>
+                    <label for="grade-select" class="block text-xs font-bold text-slate-700 mb-1.5">
+                        Grade Level / Program
+                    </label>
+                    <select id="grade-select" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#0F2B4C] focus:border-[#0F2B4C]">
+                        <option value="">-- Select Grade Level --</option>
+                        <option value="PreK–5 (PLTW Launch)">PreK–5 (PLTW Launch)</option>
+                        <option value="Grades 6–8 (PLTW Gateway)">Grades 6–8 (PLTW Gateway)</option>
+                        <option value="Grades 9–12 (High School)">Grades 9–12 (High School)</option>
+                        <option value="Mixed / Multi-Grade">Mixed / Multi-Grade</option>
+                    </select>
+                </div>
+
+                <!-- PLTW Course / Subject Dropdown (All PLTW Pathways) -->
+                <div>
+                    <label for="course-select" class="block text-xs font-bold text-slate-700 mb-1.5">
+                        PLTW Course / Subject
+                    </label>
+                    <select id="course-select" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#0F2B4C] focus:border-[#0F2B4C]">
+                        <option value="">-- Select PLTW Course --</option>
+                        <optgroup label="PLTW Launch (PreK–5)">
+                            <option value="PLTW Launch - Modules (PreK–5)">Launch Modules (PreK–5)</option>
+                            <option value="PLTW Launch - Computer Science">Launch: Computer Science</option>
+                            <option value="PLTW Launch - Engineering">Launch: Engineering</option>
+                            <option value="PLTW Launch - Biomedical Science">Launch: Biomedical Science</option>
+                        </optgroup>
+                        <optgroup label="PLTW Gateway (Grades 6–8)">
+                            <option value="Design and Modeling (DM)">Design and Modeling (DM)</option>
+                            <option value="Automation and Robotics (AR)">Automation and Robotics (AR)</option>
+                            <option value="App Creators (AC)">App Creators (AC)</option>
+                            <option value="Computer Science for Innovators and Makers (CSIM)">Computer Science for Innovators and Makers (CSIM)</option>
+                            <option value="Energy and the Environment (EE)">Energy and the Environment (EE)</option>
+                            <option value="Flight and Space (FS)">Flight and Space (FS)</option>
+                            <option value="Science of Technology (ST)">Science of Technology (ST)</option>
+                            <option value="Magic of Electrons (ME)">Magic of Electrons (ME)</option>
+                            <option value="Green Architecture (GA)">Green Architecture (GA)</option>
+                            <option value="Medical Detectives (MD)">Medical Detectives (MD)</option>
+                        </optgroup>
+                        <optgroup label="PLTW Computer Science (Grades 9–12)">
+                            <option value="Computer Science Essentials (CSE)">Computer Science Essentials (CSE)</option>
+                            <option value="Computer Science Principles (CSP)">Computer Science Principles (CSP)</option>
+                            <option value="Computer Science A (CSA)">Computer Science A (CSA)</option>
+                            <option value="Cybersecurity (SEC)">Cybersecurity (SEC)</option>
+                        </optgroup>
+                        <optgroup label="PLTW Engineering (Grades 9–12)">
+                            <option value="Introduction to Engineering Design (IED)">Introduction to Engineering Design (IED)</option>
+                            <option value="Principles of Engineering (POE)">Principles of Engineering (POE)</option>
+                            <option value="Aerospace Engineering (AE)">Aerospace Engineering (AE)</option>
+                            <option value="Civil Engineering and Architecture (CEA)">Civil Engineering and Architecture (CEA)</option>
+                            <option value="Computer Integrated Manufacturing (CIM)">Computer Integrated Manufacturing (CIM)</option>
+                            <option value="Digital Electronics (DE)">Digital Electronics (DE)</option>
+                            <option value="Environmental Sustainability (ES)">Environmental Sustainability (ES)</option>
+                            <option value="Engineering Essentials (EES)">Engineering Essentials (EES)</option>
+                            <option value="Engineering Design and Development (EDD)">Engineering Design and Development (EDD)</option>
+                        </optgroup>
+                        <optgroup label="PLTW Biomedical Science (Grades 9–12)">
+                            <option value="Principles of Biomedical Science (PBS)">Principles of Biomedical Science (PBS)</option>
+                            <option value="Human Body Systems (HBS)">Human Body Systems (HBS)</option>
+                            <option value="Medical Interventions (MI)">Medical Interventions (MI)</option>
+                            <option value="Biomedical Innovation (BI)">Biomedical Innovation (BI)</option>
+                        </optgroup>
+                        <optgroup label="Other">
+                            <option value="Other PLTW Course">Other PLTW Course / Elective</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- APB Phase Navigation Tabs (Activities, Projects, Problems) -->
+        <div class="mb-2">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Select Current APB Classroom Phase:</span>
+                <span id="completion-badge" class="text-xs font-semibold bg-white border border-slate-200 text-[#0F2B4C] px-3 py-1 rounded-full shadow-xs">
+                    0 Look-Fors Rated
+                </span>
+            </div>
+
+            <div id="tabs-container" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+
+            <!-- APB Instructional Spectrum Bar (from diagram) -->
+            <div class="mt-3 bg-white border border-slate-200 rounded-lg px-4 py-2 flex items-center justify-between text-xs font-bold text-[#0F2B4C] shadow-xs">
+                <div class="flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-[#0F2B4C] shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    <span>Teacher-led, Well-defined</span>
+                </div>
+                <div class="hidden sm:block flex-1 mx-4 h-1 rounded-full bg-gradient-to-r from-[#CBD5E1] via-[#7DD3FC] to-[#86EFAC]"></div>
+                <div class="flex items-center gap-1.5 text-right">
+                    <span>Open-ended, Student-led</span>
+                    <svg class="w-4 h-4 text-[#0F2B4C] shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Active Tab Content Container -->
+        <div id="content-container" class="mt-5"></div>
+
+        <!-- Bottom Reference Footer Note -->
+        <footer class="mt-8 text-center text-xs sm:text-sm font-semibold text-slate-700 pb-4">
+            Use <span class="text-[#0F2B4C] underline decoration-2 underline-offset-2">Moves to Support the Magic of PLTW</span> for potential next steps
+        </footer>
+    </main>
+
+    <!-- Non-Blocking Toast Notification -->
+    <div id="toast" role="status" aria-live="polite">Data copied to clipboard!</div>
+
+    <!-- Print-to-PDF Formal Table View (Visible only in @media print) -->
+    <div id="print-view"></div>
+
+    <script>
+        /**
+         * Structured APB Observation Tool Data Schema
+         * Three core APB phases (Activities, Projects, Problems) + Universal APB Look-Fors present on every tab.
+         */
+        const apbPhases = [
+            {
+                id: "activities",
+                title: "Activities",
+                subtitle: "Build Knowledge & Skills",
+                spectrumTag: "Teacher-led, Well-defined",
+                headerBg: "#ECECEC",
+                borderColor: "#94A3B8",
+                badgeBg: "#E2E8F0",
+                overview: "Structured hands-on learning experiences.",
+                indicators: [
+                    {
+                        role: "Teacher",
+                        text: "Teacher explaining, modeling, questioning, giving students feedback, checking for understanding."
+                    },
+                    {
+                        role: "Students",
+                        text: "Students practicing skills."
+                    }
+                ],
+                lookFors: [
+                    {
+                        category: "You might see students:",
+                        items: [
+                            "Working independently",
+                            "Taking notes",
+                            "Working in myPLTW",
+                            "Using new tools or software"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: "projects",
+                title: "Projects",
+                subtitle: "Practice Knowledge & Skills",
+                spectrumTag: "Guided Application",
+                headerBg: "#BCE3F5",
+                borderColor: "#0284C7",
+                badgeBg: "#BAE6FD",
+                overview: "Explore a challenge and make connections.",
+                indicators: [
+                    {
+                        role: "Teacher",
+                        text: "Teacher guiding, offering feedback, and checking in with groups."
+                    },
+                    {
+                        role: "Students",
+                        text: "Students using knowledge and skills they have learned in a new context to identify and propose solutions."
+                    }
+                ],
+                lookFors: [
+                    {
+                        category: "You should see groups or pairs of students:",
+                        items: [
+                            "Using notes, rubrics, criteria, and resources from Activities",
+                            "Doing labs or experiments",
+                            "Documenting"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: "problems",
+                title: "Problems",
+                subtitle: "Apply Knowledge & Skills",
+                spectrumTag: "Open-ended, Student-led",
+                headerBg: "#C3F2A6",
+                borderColor: "#16A34A",
+                badgeBg: "#BBF7D0",
+                overview: "Real-world challenges with no one right answer.",
+                indicators: [
+                    {
+                        role: "Teacher",
+                        text: "Teacher questioning, supporting, and giving feedback to move student thinking."
+                    },
+                    {
+                        role: "Students",
+                        text: "Students making decisions, applying knowledge and skills in a new context to create novel solutions."
+                    }
+                ],
+                lookFors: [
+                    {
+                        category: "You should see groups or pairs of students:",
+                        items: [
+                            "Planning",
+                            "Building",
+                            "Testing",
+                            "Documenting"
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        /**
+         * Universal APB Look-Fors
+         * Rendered interactively on EVERY tab and synchronized across tab switches.
+         */
+        const universalApbLookFors = {
+            title: "APB Look-Fors",
+            subtitle: "Ask these questions every time you're in a PLTW class:",
+            items: [
+                "Is the APB visible in the classroom?",
+                "Can you tell which Activity, Project, or Problem they're working on?",
+                "Can students tell you what the Problem is?",
+                "Can students tell you how what they are working on connects to the Problem?"
+            ]
+        };
+
+        /**
+         * Application State
+         * Stores active tab, phase-specific responses, and synchronized universal APB Look-For responses.
+         */
+        let activeTabId = "activities";
+        let state = {
+            phaseResponses: {},     // key: `${phaseId}__${itemIndex}` -> { status, evidence }
+            universalResponses: {}  // key: `universal__${itemIndex}` -> { status, evidence }
+        };
+
+        // Initialize default state keys
+        function initState() {
+            state.phaseResponses = {};
+            state.universalResponses = {};
+
+            apbPhases.forEach(phase => {
+                let idx = 0;
+                phase.lookFors.forEach(group => {
+                    group.items.forEach(() => {
+                        state.phaseResponses[`${phase.id}__${idx}`] = { status: "", evidence: "" };
+                        idx++;
+                    });
+                });
+            });
+
+            universalApbLookFors.items.forEach((_, idx) => {
+                state.universalResponses[`universal__${idx}`] = { status: "", evidence: "" };
+            });
+
+            // Default Observation Date to Today
+            const dateInput = document.getElementById("date-input");
+            if (dateInput) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, "0");
+                const dd = String(today.getDate()).padStart(2, "0");
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+        }
+
+        /**
+         * Returns CSS class based on 3-tier implementation scale selection
+         */
+        function getStatusStyleClass(status) {
+            switch (status) {
+                case "Observed (In Place)":
+                    return "status-observed";
+                case "Emerging / Partial":
+                    return "status-emerging";
+                case "Not Observed":
+                    return "status-not-observed";
+                case "N/A":
+                    return "status-na";
+                default:
+                    return "bg-white border-slate-300 text-slate-700";
+            }
+        }
+
+        /**
+         * Renders the 3 APB Phase Navigation Tabs
+         */
+        function renderTabs() {
+            const tabsContainer = document.getElementById("tabs-container");
+            tabsContainer.innerHTML = apbPhases.map((phase, index) => {
+                const isActive = phase.id === activeTabId;
+                const activeClass = isActive ? `active-${phase.id} border-2` : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700";
+                const ratedCount = countPhaseRatings(phase.id);
+                const totalCount = phase.lookFors.reduce((acc, g) => acc + g.items.length, 0);
+
+                return `
+                    <button
+                        type="button"
+                        onclick="switchTab('${phase.id}')"
+                        class="phase-tab ${activeClass} rounded-xl p-4 text-left flex flex-col justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F2B4C]"
+                    >
+                        <div class="flex items-center justify-between w-full mb-1">
+                            <span class="inline-flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-[#0F2B4C] text-white text-xs font-bold flex items-center justify-center">
+                                    ${index + 1}
+                                </span>
+                                <span class="text-lg font-extrabold text-[#0F2B4C]">${phase.title}</span>
+                            </span>
+                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isActive ? 'bg-[#0F2B4C] text-white' : 'bg-slate-100 text-slate-600'}">
+                                ${ratedCount}/${totalCount} Rated
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm italic font-medium text-[#0F2B4C]/90 pl-8">${phase.subtitle}</p>
+                    </button>
+                `;
+            }).join("");
+        }
+
+        /**
+         * Renders the active tab's Overview/Indicators, Phase-Specific Look-Fors, and Universal APB Look-Fors
+         */
+        function renderActiveContent() {
+            const phase = apbPhases.find(p => p.id === activeTabId);
+            if (!phase) return;
+
+            const container = document.getElementById("content-container");
+
+            // Build Phase-Specific Look-Fors Rows
+            let itemCounter = 0;
+            const phaseGroupsHtml = phase.lookFors.map(group => {
+                const rowsHtml = group.items.map(criterion => {
+                    const key = `${phase.id}__${itemCounter}`;
+                    const current = state.phaseResponses[key] || { status: "", evidence: "" };
+                    const statusClass = getStatusStyleClass(current.status);
+                    itemCounter++;
+
+                    return buildLookForRowHtml({
+                        key,
+                        type: "phase",
+                        criterion,
+                        status: current.status,
+                        evidence: current.evidence,
+                        statusClass
+                    });
+                }).join("");
+
+                return `
+                    <div class="mt-4">
+                        <div class="px-4 py-2.5 bg-slate-100/90 border-y border-slate-200 flex items-center justify-between">
+                            <h4 class="text-xs sm:text-sm font-bold text-[#0F2B4C]">${escapeHtml(group.category)}</h4>
+                            <span class="hidden md:inline text-[11px] font-semibold uppercase tracking-wider text-slate-500">3-Tier Implementation Scale &amp; Low-Inference Evidence</span>
+                        </div>
+                        <div class="divide-y divide-slate-200">
+                            ${rowsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            // Build Universal APB Look-Fors Rows (Synchronized across all tabs)
+            const universalRowsHtml = universalApbLookFors.items.map((criterion, idx) => {
+                const key = `universal__${idx}`;
+                const current = state.universalResponses[key] || { status: "", evidence: "" };
+                const statusClass = getStatusStyleClass(current.status);
+
+                return buildLookForRowHtml({
+                    key,
+                    type: "universal",
+                    criterion,
+                    status: current.status,
+                    evidence: current.evidence,
+                    statusClass,
+                    rowBgClass: "bg-[#FFFDF5]"
+                });
+            }).join("");
+
+            container.innerHTML = `
+                <!-- Section 1: Phase Overview, Role Indicators & Phase-Specific Observable Look-Fors -->
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                    <!-- Phase Banner Header -->
+                    <div style="background-color: ${phase.headerBg}; border-bottom: 2px solid ${phase.borderColor};" class="px-5 py-4 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <div class="flex items-center gap-2.5">
+                                <h2 class="text-xl font-extrabold text-[#0F2B4C]">${phase.title}</h2>
+                                <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/80 text-[#0F2B4C] border border-slate-300/70">
+                                    ${phase.spectrumTag}
+                                </span>
+                            </div>
+                            <p class="text-sm italic font-medium text-[#0F2B4C] mt-0.5">${phase.subtitle}</p>
+                        </div>
+                        <div class="text-xs font-semibold text-[#0F2B4C] bg-white/75 px-3 py-1.5 rounded-lg border border-slate-300/60">
+                            Active Phase Context &amp; Indicators
+                        </div>
+                    </div>
+
+                    <!-- Read-Only Context & Role Indicators Block -->
+                    <div class="p-5 bg-slate-50/60 border-b border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs">
+                                <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Classroom Focus</span>
+                                <p class="text-sm font-semibold text-[#0F2B4C] leading-relaxed">${escapeHtml(phase.overview)}</p>
+                            </div>
+                            ${phase.indicators.map(ind => `
+                                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs">
+                                    <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-[#0F2B4C] bg-slate-100 px-2 py-0.5 rounded mb-1.5">${escapeHtml(ind.role)} Role</span>
+                                    <p class="text-sm text-slate-700 leading-relaxed">${escapeHtml(ind.text)}</p>
+                                </div>
+                            `).join("")}
+                        </div>
+                    </div>
+
+                    <!-- Column Headers (Desktop) -->
+                    <div class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-2.5 bg-[#0F2B4C] text-white text-xs font-bold uppercase tracking-wider">
+                        <div class="col-span-5">Observable Classroom Criterion</div>
+                        <div class="col-span-3">Implementation Scale</div>
+                        <div class="col-span-4">Low-Inference Evidence &amp; Notes</div>
+                    </div>
+
+                    <!-- Phase-Specific Look-For Rows -->
+                    ${phaseGroupsHtml}
+                </section>
+
+                <!-- Section 2: Universal APB Look-Fors (Present on Every Tab) -->
+                <section class="rounded-xl shadow-sm border-2 border-[#0F2B4C] overflow-hidden bg-white">
+                    <!-- Dark Navy Banner matching image -->
+                    <div style="background-color: #0F2B4C;" class="px-5 py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-lg sm:text-xl font-extrabold tracking-tight text-white">${universalApbLookFors.title}</h3>
+                            <p class="text-xs sm:text-sm font-semibold text-[#FFF2CC] mt-0.5">${universalApbLookFors.subtitle}</p>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 text-xs font-bold bg-[#FFF2CC] text-[#0F2B4C] px-3 py-1 rounded-full self-start sm:self-center">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            Universal Walkthrough Questions (Synced Across Tabs)
+                        </span>
+                    </div>
+
+                    <!-- Warm Cream/Gold Subheader Strip -->
+                    <div style="background-color: #FFF2CC;" class="hidden md:grid md:grid-cols-12 gap-4 px-5 py-2.5 text-[#0F2B4C] text-xs font-extrabold uppercase tracking-wider border-b border-amber-200">
+                        <div class="col-span-5">Every-Class Look-For Question</div>
+                        <div class="col-span-3">Implementation Scale</div>
+                        <div class="col-span-4">Evidence / Student Response Notes</div>
+                    </div>
+
+                    <div class="divide-y divide-amber-200/80">
+                        ${universalRowsHtml}
+                    </div>
+                </section>
+            `;
+
+            updateCompletionBadge();
+        }
+
+        /**
+         * Builds a responsive 12-column evaluation row (Criterion: 5 cols, Status: 3 cols, Evidence: 4 cols)
+         */
+        function buildLookForRowHtml({ key, type, criterion, status, evidence, statusClass, rowBgClass = "bg-white" }) {
+            return `
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-5 py-4 items-start ${rowBgClass} hover:bg-slate-50/70 transition">
+                    <!-- Criterion (5 cols) -->
+                    <div class="md:col-span-5 flex items-start gap-2.5 pt-1">
+                        <span class="mt-0.5 w-4 h-4 rounded border border-slate-400 bg-white shrink-0 flex items-center justify-center text-[10px] font-bold text-[#0F2B4C]">
+                            ${status === "Observed (In Place)" ? "✓" : ""}
+                        </span>
+                        <span class="text-sm font-semibold text-slate-800 leading-snug">${escapeHtml(criterion)}</span>
+                    </div>
+
+                    <!-- 3-Tier Implementation Scale Dropdown (3 cols) -->
+                    <div class="md:col-span-3">
+                        <label class="block md:hidden text-[11px] font-bold uppercase text-slate-500 mb-1">Implementation Scale</label>
+                        <select
+                            onchange="handleStatusChange('${type}', '${key}', this)"
+                            class="status-select w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0F2B4C] ${statusClass}"
+                        >
+                            <option value="" ${status === "" ? "selected" : ""}>-- Select Status --</option>
+                            <option value="Observed (In Place)" ${status === "Observed (In Place)" ? "selected" : ""}>Observed (In Place)</option>
+                            <option value="Emerging / Partial" ${status === "Emerging / Partial" ? "selected" : ""}>Emerging / Partial</option>
+                            <option value="Not Observed" ${status === "Not Observed" ? "selected" : ""}>Not Observed</option>
+                            <option value="N/A" ${status === "N/A" ? "selected" : ""}>N/A</option>
+                        </select>
+                    </div>
+
+                    <!-- Evidence Textarea (4 cols) -->
+                    <div class="md:col-span-4">
+                        <label class="block md:hidden text-[11px] font-bold uppercase text-slate-500 mb-1">Evidence &amp; Notes</label>
+                        <textarea
+                            rows="2"
+                            oninput="handleEvidenceChange('${type}', '${key}', this.value)"
+                            placeholder="Record objective classroom evidence or student responses..."
+                            class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#0F2B4C] focus:border-[#0F2B4C] resize-y"
+                        >${escapeHtml(evidence)}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Updates status in state and refreshes visual styling
+         */
+        function handleStatusChange(type, key, selectEl) {
+            const val = selectEl.value;
+            if (type === "phase") {
+                state.phaseResponses[key].status = val;
+            } else {
+                state.universalResponses[key].status = val;
+            }
+
+            // Update select classes immediately
+            selectEl.className = `status-select w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0F2B4C] ${getStatusStyleClass(val)}`;
+
+            // Update checkbox indicator in sibling column
+            const row = selectEl.closest(".grid");
+            if (row) {
+                const box = row.querySelector("span.rounded");
+                if (box) {
+                    box.textContent = val === "Observed (In Place)" ? "✓" : "";
+                }
+            }
+
+            renderTabs();
+            updateCompletionBadge();
+        }
+
+        /**
+         * Updates evidence text in state
+         */
+        function handleEvidenceChange(type, key, value) {
+            if (type === "phase") {
+                state.phaseResponses[key].evidence = value;
+            } else {
+                state.universalResponses[key].evidence = value;
+            }
+        }
+
+        /**
+         * Counts rated items in a specific phase
+         */
+        function countPhaseRatings(phaseId) {
+            let count = 0;
+            Object.keys(state.phaseResponses).forEach(k => {
+                if (k.startsWith(`${phaseId}__`) && state.phaseResponses[k].status !== "") {
+                    count++;
+                }
+            });
+            return count;
+        }
+
+        /**
+         * Updates top-right completion counter pill
+         */
+        function updateCompletionBadge() {
+            const phaseCount = Object.values(state.phaseResponses).filter(r => r.status !== "").length;
+            const univCount = Object.values(state.universalResponses).filter(r => r.status !== "").length;
+            const total = phaseCount + univCount;
+            const badge = document.getElementById("completion-badge");
+            if (badge) {
+                badge.textContent = `${total} Look-For${total === 1 ? "" : "s"} Rated`;
+            }
+        }
+
+        /**
+         * Switches between Activities, Projects, and Problems tabs
+         */
+        function switchTab(tabId) {
+            activeTabId = tabId;
+            renderTabs();
+            renderActiveContent();
+        }
+
+        /**
+         * Validates required metadata fields before Copy, Export CSV, or Print
+         */
+        function validateMetadata() {
+            const evaluatorEl = document.getElementById("evaluator-input");
+            const teacherEl = document.getElementById("teacher-input");
+            const evaluator = evaluatorEl.value.trim();
+            const teacher = teacherEl.value.trim();
+
+            if (!evaluator) {
+                showToast("Please enter the Evaluator Name before exporting.", true);
+                evaluatorEl.focus();
+                return false;
+            }
+            if (!teacher) {
+                showToast("Please enter the Teacher Observed before exporting.", true);
+                teacherEl.focus();
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * Collects all metadata and structured evaluation rows for Copy, CSV, and Print
+         * Exports:
+         *  1. Universal APB Look-Fors (Every Class)
+         *  2. Active Phase rows + any other phase rows that have status or evidence entered
+         */
+        function collectReportData() {
+            const metadata = {
+                evaluator: document.getElementById("evaluator-input").value.trim(),
+                teacher: document.getElementById("teacher-input").value.trim(),
+                date: document.getElementById("date-input").value || "Not Specified",
+                gradeLevel: document.getElementById("grade-select").value || "Not Specified",
+                course: document.getElementById("course-select").value || "Not Specified",
+                primaryPhase: apbPhases.find(p => p.id === activeTabId)?.title || activeTabId
+            };
+
+            const rows = [];
+
+            // 1. Universal APB Look-Fors
+            universalApbLookFors.items.forEach((criterion, idx) => {
+                const resp = state.universalResponses[`universal__${idx}`] || { status: "", evidence: "" };
+                rows.push({
+                    domain: "APB Look-Fors (Every Class)",
+                    category: "Universal Walkthrough Questions",
+                    criterion,
+                    status: resp.status || "Not Rated",
+                    evidence: resp.evidence.trim()
+                });
+            });
+
+            // 2. Phase-Specific Look-Fors (always include active tab + any other phase with data)
+            apbPhases.forEach(phase => {
+                let idx = 0;
+                const phaseRows = [];
+                let hasAnyData = false;
+
+                phase.lookFors.forEach(group => {
+                    group.items.forEach(criterion => {
+                        const resp = state.phaseResponses[`${phase.id}__${idx}`] || { status: "", evidence: "" };
+                        if (resp.status || resp.evidence.trim()) {
+                            hasAnyData = true;
+                        }
+                        phaseRows.push({
+                            domain: `${phase.title} (${phase.subtitle})`,
+                            category: group.category,
+                            criterion,
+                            status: resp.status || "Not Rated",
+                            evidence: resp.evidence.trim()
+                        });
+                        idx++;
+                    });
+                });
+
+                if (phase.id === activeTabId || hasAnyData) {
+                    rows.push(...phaseRows);
+                }
+            });
+
+            return { metadata, rows };
+        }
+
+        /**
+         * Copies formatted plain-text summary to clipboard
+         */
+        function copyToClipboard() {
+            if (!validateMetadata()) return;
+
+            const { metadata, rows } = collectReportData();
+            const lines = [
+                "====================================================",
+                "APB OBSERVATION TOOL | Mass Learning Project & one8",
+                "====================================================",
+                `Evaluator Name:    ${metadata.evaluator}`,
+                `Teacher Observed:  ${metadata.teacher}`,
+                `Observation Date:  ${metadata.date}`,
+                `Grade Level:       ${metadata.gradeLevel}`,
+                `PLTW Course:       ${metadata.course}`,
+                `Active APB Phase:  ${metadata.primaryPhase}`,
+                "----------------------------------------------------",
+                ""
+            ];
+
+            let currentDomain = "";
+            rows.forEach(r => {
+                if (r.domain !== currentDomain) {
+                    currentDomain = r.domain;
+                    lines.push(`[ ${currentDomain.toUpperCase()} ]`);
+                }
+                lines.push(`• ${r.criterion}`);
+                lines.push(`  Status:   ${r.status}`);
+                if (r.evidence) {
+                    lines.push(`  Evidence: ${r.evidence}`);
+                }
+                lines.push("");
+            });
+
+            const textOutput = lines.join("\n");
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textOutput)
+                    .then(() => showToast("Observation report copied to clipboard!"))
+                    .catch(() => fallbackCopyText(textOutput));
+            } else {
+                fallbackCopyText(textOutput);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand("copy");
+                showToast("Observation report copied to clipboard!");
+            } catch (err) {
+                showToast("Unable to copy automatically. Please use Export CSV.", true);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        /**
+         * Exports properly escaped CSV file matching Print/PDF columns
+         */
+        function exportCSV() {
+            if (!validateMetadata()) return;
+
+            const { metadata, rows } = collectReportData();
+            const headers = [
+                "Evaluator Name",
+                "Teacher Observed",
+                "Observation Date",
+                "Grade Level",
+                "PLTW Course",
+                "APB Phase / Domain",
+                "Category",
+                "Look-For Criterion",
+                "Implementation Status",
+                "Evidence & Notes"
+            ];
+
+            const csvLines = [headers.map(csvEscape).join(",")];
+
+            rows.forEach(r => {
+                const rowValues = [
+                    metadata.evaluator,
+                    metadata.teacher,
+                    metadata.date,
+                    metadata.gradeLevel,
+                    metadata.course,
+                    r.domain,
+                    r.category,
+                    r.criterion,
+                    r.status,
+                    r.evidence
+                ];
+                csvLines.push(rowValues.map(csvEscape).join(","));
+            });
+
+            const csvContent = "\uFEFF" + csvLines.join("\r\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+
+            const safeTeacher = metadata.teacher.replace(/[^a-z0-9]/gi, "_").replace(/_+/g, "_");
+            const safeDate = metadata.date.replace(/[^0-9-]/g, "");
+            const filename = `APB_Observation_${safeTeacher}_${safeDate}.csv`;
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast(`Exported ${filename}`);
+        }
+
+        function csvEscape(val) {
+            const str = String(val ?? "");
+            if (str.includes('"') || str.includes(",") || str.includes("\n") || str.includes("\r")) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        }
+
+        /**
+         * Builds the dedicated tabular report in #print-view and invokes window.print()
+         */
+        function printPDF() {
+            if (!validateMetadata()) return;
+
+            const { metadata, rows } = collectReportData();
+            const printContainer = document.getElementById("print-view");
+
+            const tableRowsHtml = rows.map(r => `
+                <tr>
+                    <td style="font-weight: 600; color: #0F2B4C;">${escapeHtml(r.domain)}</td>
+                    <td>${escapeHtml(r.category)}</td>
+                    <td>${escapeHtml(r.criterion)}</td>
+                    <td style="font-weight: 600;">${escapeHtml(r.status)}</td>
+                    <td>${escapeHtml(r.evidence || "—")}</td>
+                </tr>
+            `).join("");
+
+            printContainer.innerHTML = `
+                <div class="print-banner" style="padding: 16px 20px; border-radius: 6px; margin-bottom: 16px;">
+                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.9;">
+                        MASS LEARNING PROJECT | one8
+                    </div>
+                    <div style="font-size: 20px; font-weight: 800; margin-top: 2px;">
+                        APB Observation Tool — Classroom Walkthrough Report
+                    </div>
+                    <div style="font-size: 12px; margin-top: 2px; opacity: 0.9;">
+                        PLTW Classrooms look and feel different depending on which part of the APB they are on
+                    </div>
+                </div>
+
+                <table style="margin-bottom: 16px;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 20%; background: #F8FAFC; font-weight: 700;">Evaluator Name</td>
+                            <td style="width: 30%;">${escapeHtml(metadata.evaluator)}</td>
+                            <td style="width: 20%; background: #F8FAFC; font-weight: 700;">Observation Date</td>
+                            <td style="width: 30%;">${escapeHtml(metadata.date)}</td>
+                        </tr>
+                        <tr>
+                            <td style="background: #F8FAFC; font-weight: 700;">Teacher Observed</td>
+                            <td>${escapeHtml(metadata.teacher)}</td>
+                            <td style="background: #F8FAFC; font-weight: 700;">Grade Level</td>
+                            <td>${escapeHtml(metadata.gradeLevel)}</td>
+                        </tr>
+                        <tr>
+                            <td style="background: #F8FAFC; font-weight: 700;">PLTW Course</td>
+                            <td>${escapeHtml(metadata.course)}</td>
+                            <td style="background: #F8FAFC; font-weight: 700;">Primary APB Phase</td>
+                            <td style="font-weight: 700; color: #0F2B4C;">${escapeHtml(metadata.primaryPhase)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 18%;">APB Phase / Domain</th>
+                            <th style="width: 16%;">Category</th>
+                            <th style="width: 26%;">Look-For Criterion</th>
+                            <th style="width: 15%;">Implementation Status</th>
+                            <th style="width: 25%;">Evidence &amp; Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRowsHtml}
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 14px; font-size: 10px; color: #475569; text-align: right;">
+                    Next Steps Reference: Moves to Support the Magic of PLTW • Generated via APB Observation Tool
+                </div>
+            `;
+
+            window.print();
+        }
+
+        /**
+         * Resets all metadata fields, dropdowns, evidence textareas, and resets to Activities tab
+         */
+        function resetForm() {
+            document.getElementById("evaluator-input").value = "";
+            document.getElementById("teacher-input").value = "";
+            document.getElementById("grade-select").value = "";
+            document.getElementById("course-select").value = "";
+
+            activeTabId = "activities";
+            initState();
+            renderTabs();
+            renderActiveContent();
+            showToast("Form has been reset.");
+        }
+
+        /**
+         * Non-blocking toast alert
+         */
+        let toastTimeout;
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.className = isError ? "toast-error show" : "show";
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.className = "";
+            }, 3000);
+        }
+
+        /**
+         * Safe HTML escaping utility
+         */
+        function escapeHtml(str) {
+            return String(str ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Bootstrap application on load
+        window.addEventListener("DOMContentLoaded", () => {
+            initState();
+            renderTabs();
+            renderActiveContent();
+        });
+    </script>
+</body>
+</html>
